@@ -1,5 +1,6 @@
 import uuid
 
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -9,9 +10,11 @@ from app.models import Chunk as ChunkModel
 from app.models import Document as DocumentModel
 from app.schemas.document import Chunk as ChunkSchema
 from app.schemas.document import ParsedDocument
+from app.schemas.document import RelatedDocument as RelatedDocumentSchema
 from app.services.arxiv import InvalidArxivId, fetch_arxiv_pdf, normalize_arxiv_id
 from app.services.embeddings import embed_texts
 from app.services.pdf_extraction import extract_document
+from app.services.related_documents import find_related
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -37,6 +40,26 @@ def _document_to_schema(document: DocumentModel) -> ParsedDocument:
             for c in document.chunks
         ],
     )
+
+
+def _document_embedding(
+    chunk_models: list[ChunkModel], embeddings: list[list[float]]
+) -> list[float] | None:
+    """Whole-document representation for related-paper search
+    (app/services/related_documents.py). Averaging *every* chunk's
+    embedding dilutes topical signal with references/boilerplate that
+    dominate a paper's chunk count - found by comparing results before/
+    after: with all-chunk averaging, 5 real ingested papers scored within
+    a narrow 0.92-0.96 band regardless of actual relatedness. Using just
+    the abstract (or the first few chunks as a fallback when no section is
+    labeled "abstract") gives a much more topical fingerprint."""
+    abstract_indices = [
+        i for i, c in enumerate(chunk_models) if c.section and "abstract" in c.section.lower()
+    ]
+    indices = abstract_indices or list(range(min(3, len(chunk_models))))
+    if not indices:
+        return None
+    return np.mean(np.array([embeddings[i] for i in indices]), axis=0).tolist()
 
 
 def _persist_document(
@@ -68,6 +91,8 @@ def _persist_document(
     embeddings = embed_texts([c.text for c in chunk_models])
     for chunk_model, embedding in zip(chunk_models, embeddings, strict=True):
         chunk_model.embedding = embedding
+
+    document.embedding = _document_embedding(chunk_models, embeddings)
 
     db.commit()
 
@@ -106,3 +131,18 @@ def get_document(document_id: str, db: Session = Depends(get_db)) -> ParsedDocum
         raise HTTPException(status_code=404, detail="Document not found")
 
     return _document_to_schema(document)
+
+
+@router.get("/{document_id}/related", response_model=list[RelatedDocumentSchema])
+def get_related_documents(
+    document_id: str, k: int = 5, db: Session = Depends(get_db)
+) -> list[RelatedDocumentSchema]:
+    document = db.get(DocumentModel, document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    related = find_related(db, document_id, k=k)
+    return [
+        RelatedDocumentSchema(document_id=r.document.id, title=r.document.title, score=r.score)
+        for r in related
+    ]

@@ -68,6 +68,12 @@ class QuizQuestion(CamelModel):
     grounding_score: float | None
 
 
+class RelatedDocument(CamelModel):
+    document_id: str
+    title: str
+    score: float
+
+
 class Publication(CamelModel):
     id: str
     document_id: str

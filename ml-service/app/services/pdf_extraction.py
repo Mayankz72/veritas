@@ -40,6 +40,12 @@ class ExtractedChunk:
 
 
 def _clean_text(text: str) -> str:
+    # Some PDFs (e.g. certain ligature/control-character encodings) yield
+    # NUL bytes in extracted text, which Postgres text columns reject
+    # outright ("PostgreSQL text fields cannot contain NUL (0x00) bytes") -
+    # found by ingesting a small corpus of real arXiv papers for Phase 7's
+    # related-documents feature.
+    text = text.replace("\x00", "")
     return " ".join(text.split())
 
 

@@ -3,8 +3,16 @@ import pytest
 
 from app.services.pdf_extraction import (
     CHUNK_TARGET_CHARS,
+    _clean_text,
     extract_document,
 )
+
+
+def test_clean_text_strips_nul_bytes():
+    # Postgres text columns reject NUL bytes outright; some real PDFs
+    # (e.g. certain ligature encodings) produce them during extraction.
+    assert _clean_text("Adam\x00 optimizer") == "Adam optimizer"
+    assert "\x00" not in _clean_text("a\x00b\x00c")
 
 
 def _build_pdf() -> bytes:

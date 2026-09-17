@@ -63,6 +63,13 @@ export const QuizQuestionSchema = z.object({
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
+export const RelatedDocumentSchema = z.object({
+  documentId: z.string(),
+  title: z.string(),
+  score: z.number(),
+});
+export type RelatedDocument = z.infer<typeof RelatedDocumentSchema>;
+
 export const PublicationSchema = z.object({
   id: z.string(),
   documentId: z.string(),

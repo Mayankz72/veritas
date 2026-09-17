@@ -29,6 +29,10 @@ class Document(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     page_count: Mapped[int] = mapped_column(Integer, nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Mean of this document's chunk embeddings - a cheap whole-document
+    # representation for nearest-neighbor "related papers" search
+    # (app/services/related_documents.py), computed once at ingest time.
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

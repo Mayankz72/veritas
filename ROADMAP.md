@@ -125,11 +125,19 @@ an ML project.
 ## Phase 7 — ML Enhancements (extra differentiators)
 **Goal:** The features that make this unambiguously an ML project on a resume.
 
-- [ ] Layout model upgrade: replace heuristic figure/section detection with a real model (LayoutLMv3 or a small trained classifier on section-heading detection) — report accuracy vs. the heuristic baseline
-- [ ] Paper similarity / "related work" feature: embed papers (or their abstracts) and do nearest-neighbor search across an ingested corpus; report recall@k against a small hand-labeled "related papers" set
-- [ ] Optional: fine-tune a small model (e.g. LoRA on an open embedding or classification model) for the grounding verifier if the off-the-shelf NLI model underperforms on your eval set
+- [ ] Layout model upgrade — **skipped deliberately**: the Phase 1 heuristic already recovers 100% of the real headings/subheadings on every paper ingested so far (verified across 5 real arXiv PDFs, not just the one demo paper). A trained classifier would also just repeat Phase 3's "logistic regression over engineered features" pattern rather than demonstrate something new. Revisit if a paper with unusual layout (multi-column, heavy figures) actually breaks the heuristic.
+- [x] Paper similarity / "related work" feature — `Document.embedding` (pgvector), `app/services/related_documents.py` (cosine nearest-neighbor), `GET /documents/{id}/related`, `RelatedPapers.tsx`. Ingested a real 5-paper corpus to test it: "Attention Is All You Need" plus two of its own cited references (Layer Normalization, Adam) and two topically-adjacent-but-uncited papers (BERT, GANs).
+- [ ] Recall@k against a hand-labeled set — not attempted; 5 documents is too small a corpus for a recall@k number to mean anything statistically. Reported qualitative rankings instead (below), which is the honest thing to do at this scale rather than compute a metric that would look precise but isn't meaningful.
 
-**Deliverable:** At least one component with a trained/fine-tuned model and a before/after metric comparison — the strongest resume line in the project.
+**What actually happened (worth reading before trusting this feature):** tried two document-embedding strategies and got two different, both defensible-looking, but disagreeing rankings:
+- **Whole-document mean-pool** (average every chunk's embedding): BERT 0.962, Layer Norm 0.947, GANs 0.940, Adam 0.920 — intuitively reasonable ordering (BERT closest, a direct Transformer descendant), but a narrow 0.04 band suggests the ranking is barely distinguishing anything; likely because averaging in every reference/boilerplate chunk dilutes the signal.
+- **Abstract-only** (the standard practice in paper-recommendation literature - see `_document_embedding` in `app/routers/documents.py`): Adam 0.855, BERT 0.816, GANs 0.809, Layer Norm 0.804 — Adam ranking above BERT is *not* intuitively right, and the band is still narrow (~0.05).
+
+Shipped the abstract-only version since it's the principled default per the literature, but the honest conclusion is: **at this corpus size (5 docs) with a general-purpose small embedding model (`bge-small`, 384-dim), neither pooling strategy cleanly separates related from unrelated papers.** Likely fixes, left as future work: a larger corpus so rankings average out per-document noise, a stronger/domain-tuned embedding model, or pooling that weights title+abstract+conclusion rather than abstract alone. This is reported instead of quietly picking whichever run looked better - the eval discipline from Phase 3 applied to a feature that didn't pan out as cleanly.
+
+**Also found and fixed via this corpus ingestion:** two of the five real papers (Layer Normalization, Adam) 500'd on ingest with `PostgreSQL text fields cannot contain NUL (0x00) bytes` - some PDFs' font/ligature encoding produces literal NUL bytes during text extraction. Fixed in `_clean_text` (`app/services/pdf_extraction.py`) with a regression test.
+
+**Deliverable:** Partial — related-papers retrieval mechanism is real and working (verified live against 5 real ingested papers), but the "strongest resume line" bar this phase set for itself isn't met: the honest result is a negative/inconclusive one on ranking quality, not a clean before/after win. The grounding verifier (Phase 3) remains the strongest trained-model resume line in this project.
 
 ---
 

@@ -5,6 +5,7 @@ import {
   PublicationBundleSchema,
   PublicationSchema,
   QuizQuestionSchema,
+  RelatedDocumentSchema,
   SectionHealthSchema,
   type GroundedClaim,
   type NarrativeTemplate,
@@ -12,6 +13,7 @@ import {
   type Publication,
   type PublicationBundle,
   type QuizQuestion,
+  type RelatedDocument,
   type SectionHealth,
 } from "./schemas/document";
 import { z } from "zod";
@@ -85,6 +87,13 @@ export function getDocumentHealth(documentId: string): Promise<SectionHealth[]> 
 
 export function listTemplates(): Promise<NarrativeTemplate[]> {
   return request("/templates", z.array(NarrativeTemplateSchema));
+}
+
+export function getRelatedDocuments(documentId: string, k = 5): Promise<RelatedDocument[]> {
+  return request(
+    `/documents/${documentId}/related?k=${k}`,
+    z.array(RelatedDocumentSchema),
+  );
 }
 
 export function publishDocument(
