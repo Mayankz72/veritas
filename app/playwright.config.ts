@@ -4,8 +4,13 @@ import { defineConfig } from "@playwright/test";
  * E2E tests assume the Veritas ml-service is already running externally
  * (docker compose up -d && uvicorn app.main:app --port 8000) - Playwright
  * only manages the Next.js dev server itself, not the Python backend or
- * Postgres.
+ * Postgres. Set E2E_BASE_URL to a remote origin (e.g. a Vercel deployment)
+ * to test a live deployment instead - Playwright then skips starting a
+ * local dev server entirely.
  */
+const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:4173";
+const isLocal = baseURL.includes("localhost") || baseURL.includes("127.0.0.1");
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 90_000,
@@ -13,15 +18,17 @@ export default defineConfig({
   retries: 0,
   reporter: "list",
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:4173",
+    baseURL,
     trace: "retain-on-failure",
     video: process.env.RECORD_DEMO ? "on" : "retain-on-failure",
     viewport: { width: 1280, height: 800 },
   },
-  webServer: {
-    command: "npx next dev -p 4173",
-    url: "http://localhost:4173",
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  webServer: isLocal
+    ? {
+        command: "npx next dev -p 4173",
+        url: "http://localhost:4173",
+        reuseExistingServer: true,
+        timeout: 60_000,
+      }
+    : undefined,
 });
