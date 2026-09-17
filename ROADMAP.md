@@ -158,11 +158,13 @@ Shipped the abstract-only version since it's the principled default per the lite
 ## Phase 9 — Polish, Testing, Deployment
 **Goal:** Ship it somewhere real and make it demo-ready.
 
-- [ ] E2E tests (Playwright) for core flows: upload → generate → verify → publish
-- [ ] Unit tests for retrieval, verifier, AST evaluator (safety-critical — test the eval sandbox thoroughly)
-- [ ] Deploy: Next.js on Vercel, ML service on Fly.io/Railway/Render, Postgres managed (Neon/Supabase)
-- [ ] Record a demo GIF/video for the README
-- [ ] Write the README with: architecture diagram, eval metrics table, and a "why this isn't just a wrapper" section
+- [x] E2E tests (Playwright) for core flows: `app/e2e/paper-studio.spec.ts` covers ingest → view → generate claims → publish → view the public read-only page, run headless against the real ml-service/Postgres — this is also what closes the "not verified in a real browser" gap flagged back in Phase 4 and 6 (the Claude-in-Chrome extension wasn't connected then; a real, scriptable Chromium doesn't have that dependency)
+- [x] Unit tests for retrieval, verifier, AST evaluator: the AST evaluator already had 9 Vitest tests (Phase 4, including the real prototype-pollution bug it caught); the grounding verifier has its own suite (Phase 3); retrieval didn't have any DB-independent unit tests possible (it's pure pgvector SQL), so added `tests/integration/` instead — 10 tests against a real Postgres, auto-skipped when one isn't reachable, and wired into CI with a Postgres service container
+- [ ] Deploy: **not done** — no hosting accounts available to this session. `ml-service/Dockerfile` is built and smoke-tested against the docker-compose network; the Next.js app needs zero deploy config for Vercel. Documented as the one explicit manual step in the root README rather than silently skipped.
+- [x] Demo video: `demo/walkthrough.webm`, recorded via Playwright's own video capture during a real passing E2E run (not staged/mocked) — no `ffmpeg` available in this environment to convert to GIF, so it's a `.webm`
+- [x] README rewrite: architecture diagram (ASCII, the 4-stage pipeline), the eval metrics table (grounding verifier accuracy/F1, retrieval similarity, and the honest "inconclusive" result from Phase 7's related-papers ranking), and a "why this isn't just a wrapper" section walking through each pipeline stage
+
+**Deliverable:** ✅ 51 backend tests (41 unit + 10 integration, all passing), 9 frontend unit tests, 1 full-flow E2E test — all passing for real, verified in this session, not just written. Root `README.md` rewritten as the actual resume-facing artifact. Deployment is the one remaining step, left undone deliberately rather than faked.
 
 **Deliverable:** Live demo URL + polished README = the actual resume artifact.
 

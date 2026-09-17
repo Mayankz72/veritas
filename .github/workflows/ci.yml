@@ -11,6 +11,22 @@ jobs:
     defaults:
       run:
         working-directory: ml-service
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: veritas
+          POSTGRES_PASSWORD: veritas
+          POSTGRES_DB: veritas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://veritas:veritas@localhost:5432/veritas
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
