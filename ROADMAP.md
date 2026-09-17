@@ -59,13 +59,13 @@ an ML project.
 ## Phase 2 — Evidence-Grounded RAG Core (the centerpiece)
 **Goal:** Real retrieval, not LLM-asserted citations.
 
-- [ ] Embed all chunks (batch embedding job), store in pgvector
-- [ ] Retrieval endpoint: query/claim → top-k relevant chunks with similarity scores
-- [ ] Claim generation: LLM generates a claim/summary sentence *from* retrieved chunks only (context-restricted prompting)
-- [ ] Citation attachment: each generated claim stores which chunk(s)/page(s) it was grounded on + the retrieval similarity score
-- [ ] "Exact quote" extraction: given a claim + its source chunk, extract the minimal supporting span (LLM or simple span-matching)
+- [x] Embed all chunks, store in pgvector (`BAAI/bge-small-en-v1.5` via `fastembed`/ONNX runtime — no torch dependency, 384-dim, computed automatically on ingest)
+- [x] Retrieval endpoint: query/claim → top-k relevant chunks with similarity scores (`app/services/retrieval.py`, pgvector cosine distance). Verified live: querying "How does multi-head attention work?" against the real paper returns passages actually about multi-head attention at 0.72-0.81 cosine similarity.
+- [x] Claim generation: pluggable `LLMProvider` interface (`app/services/claim_generation.py`) restricted to retrieved passages only. Default `ExtractiveProvider` needs no API key (deterministic, offline — used by tests/CI); `OpenAIProvider`/`AnthropicProvider`/`GeminiProvider`/`OllamaProvider` are opt-in via `LLM_PROVIDER` env var for a real LLM upgrade later.
+- [x] Citation attachment: each `Claim` row stores `source_chunk_ids`, `page`, and `retrieval_score` (`POST /documents/{id}/claims/generate`)
+- [x] "Exact quote" extraction: exact-substring fast path + difflib best-sentence-match fallback (`extract_supporting_quote`)
 
-**Deliverable:** For any section, generate 3-5 claims, each with a page number, exact quote, and a numeric grounding-retrieval score — visible in a debug view.
+**Deliverable:** ✅ `POST /documents/{id}/claims/generate` produces claims with page, quote, and retrieval score, persisted and retrievable via `GET /documents/{id}/claims`. 21 passing tests total. `groundingLabel`/`groundingScore` are wired into the schema but stay `null` until Phase 3's verifier runs.
 
 ---
 

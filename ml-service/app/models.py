@@ -44,3 +44,21 @@ class Chunk(Base):
     embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM), nullable=True)
 
     document: Mapped[Document] = relationship(back_populates="chunks")
+
+
+class Claim(Base):
+    __tablename__ = "claims"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"), nullable=False)
+    section: Mapped[str | None] = mapped_column(String, nullable=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    source_chunk_ids: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
+    page: Mapped[int] = mapped_column(Integer, nullable=False)
+    quote: Mapped[str] = mapped_column(Text, nullable=False)
+    retrieval_score: Mapped[float] = mapped_column(Float, nullable=False)
+    grounding_label: Mapped[str | None] = mapped_column(String, nullable=True)
+    grounding_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )

@@ -31,6 +31,8 @@ type Chunk = {
 ```ts
 type GroundedClaim = {
   id: string;
+  documentId: string;
+  section: string | null;
   text: string;
   sourceChunkIds: string[];
   page: number;

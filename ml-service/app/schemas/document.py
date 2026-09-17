@@ -26,3 +26,16 @@ class ParsedDocument(CamelModel):
     title: str
     page_count: int
     chunks: list[Chunk]
+
+
+class GroundedClaim(CamelModel):
+    id: str
+    document_id: str
+    section: str | None
+    text: str
+    source_chunk_ids: list[str]
+    page: int
+    quote: str
+    retrieval_score: float
+    grounding_label: Literal["supported", "unsupported", "partial"] | None
+    grounding_score: float | None

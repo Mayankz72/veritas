@@ -10,6 +10,7 @@ from app.models import Document as DocumentModel
 from app.schemas.document import Chunk as ChunkSchema
 from app.schemas.document import ParsedDocument
 from app.services.arxiv import InvalidArxivId, fetch_arxiv_pdf, normalize_arxiv_id
+from app.services.embeddings import embed_texts
 from app.services.pdf_extraction import extract_document
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -44,6 +45,11 @@ def _persist_document(
             )
         )
     db.add_all(chunk_models)
+
+    embeddings = embed_texts([c.text for c in chunk_models])
+    for chunk_model, embedding in zip(chunk_models, embeddings, strict=True):
+        chunk_model.embedding = embedding
+
     db.commit()
 
     return ParsedDocument(
