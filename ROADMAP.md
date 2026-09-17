@@ -101,12 +101,12 @@ an ML project.
 ## Phase 5 — Authoring Tools (feature parity)
 **Goal:** Let a user edit/regenerate content without losing evidence guarantees.
 
-- [ ] Section-level regeneration that re-runs Phase 2+3 pipeline, not just a raw re-prompt
-- [ ] Narrative templates ("Method Walkthrough," "Results Briefing") as prompt+structure presets
-- [ ] Word-level version history (diff-based, stored per section)
-- [ ] "Health panel": surface sections with low grounding scores or thin evidence, offer a "Strengthen" action that re-retrieves with a wider net
+- [x] Section-level regeneration that re-runs Phase 2+3 pipeline — `POST /documents/{id}/claims/regenerate` re-retrieves, re-generates, and re-verifies grounding from scratch, it doesn't just re-prompt over stale evidence
+- [x] Narrative templates ("Method Walkthrough," "Results Briefing," "Architecture Overview," "Limitations & Future Work") as query presets — `GET /templates`, surfaced as a dropdown in the query box
+- [ ] Word-level version history (diff-based) — engineering call: implemented as **claim-level** version history instead (`version`/`isCurrent` on `Claim`; regenerating a section marks old claims `isCurrent=False` rather than deleting them, all versions stay queryable via `?current_only=false`). A real word-level diff view is future work if claims start being hand-edited rather than only regenerated wholesale.
+- [x] "Health panel": surfaces thin-evidence sections (no claims yet) and weak ones (any unsupported claim, or average grounding confidence below 0.6) with a one-click "Strengthen" that regenerates with a wider retrieval net (`k=8` vs. the default 5) — `app/services/health.py`, `GET /documents/{id}/health`, `HealthPanel.tsx`
 
-**Deliverable:** Editable workspace where every edit re-validates grounding.
+**Deliverable:** ✅ Verified live end-to-end: generated 2 claims for "5.3 Optimizer" (health panel correctly unflagged it, avg score 1.0), then regenerated with a different query — old claims flipped to `isCurrent=False` (still queryable), 3 new v2 claims created and marked current, health panel reflected the new state. 5 new passing tests (`test_health.py`) plus the existing 31 = 36 total. Frontend: `tsc`/ESLint clean, production build succeeds, 9 Vitest tests still pass. Also fixed a stale Pydantic `class Config` deprecation warning while in the area.
 
 ---
 

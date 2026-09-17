@@ -26,7 +26,7 @@ type Chunk = {
 };
 ```
 
-## `GroundedClaim` (Phase 2/3)
+## `GroundedClaim` (Phase 2/3, extended Phase 5)
 
 ```ts
 type GroundedClaim = {
@@ -40,6 +40,8 @@ type GroundedClaim = {
   retrievalScore: number;
   groundingLabel: "supported" | "unsupported" | "partial" | null;
   groundingScore: number | null;
+  version: number;
+  isCurrent: boolean;
 };
 ```
 

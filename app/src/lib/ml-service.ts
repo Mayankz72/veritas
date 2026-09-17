@@ -1,10 +1,14 @@
 import {
   GroundedClaimSchema,
+  NarrativeTemplateSchema,
   ParsedDocumentSchema,
   QuizQuestionSchema,
+  SectionHealthSchema,
   type GroundedClaim,
+  type NarrativeTemplate,
   type ParsedDocument,
   type QuizQuestion,
+  type SectionHealth,
 } from "./schemas/document";
 import { z } from "zod";
 
@@ -54,6 +58,29 @@ export function generateClaims(
       max_claims: params.maxClaims ?? 5,
     }),
   });
+}
+
+export function regenerateClaims(
+  documentId: string,
+  params: { query: string; section: string | null; k?: number; maxClaims?: number },
+): Promise<GroundedClaim[]> {
+  return request(`/documents/${documentId}/claims/regenerate`, z.array(GroundedClaimSchema), {
+    method: "POST",
+    body: JSON.stringify({
+      query: params.query,
+      section: params.section,
+      k: params.k ?? 5,
+      max_claims: params.maxClaims ?? 5,
+    }),
+  });
+}
+
+export function getDocumentHealth(documentId: string): Promise<SectionHealth[]> {
+  return request(`/documents/${documentId}/health`, z.array(SectionHealthSchema));
+}
+
+export function listTemplates(): Promise<NarrativeTemplate[]> {
+  return request("/templates", z.array(NarrativeTemplateSchema));
 }
 
 export function listQuiz(documentId: string): Promise<QuizQuestion[]> {

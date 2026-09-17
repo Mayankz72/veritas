@@ -7,10 +7,17 @@ import {
   getDocument,
   listClaims,
   listQuiz,
+  listTemplates,
 } from "@/lib/ml-service";
-import type { GroundedClaim, ParsedDocument, QuizQuestion } from "@/lib/schemas/document";
+import type {
+  GroundedClaim,
+  NarrativeTemplate,
+  ParsedDocument,
+  QuizQuestion,
+} from "@/lib/schemas/document";
 import { AttentionPlayground } from "./AttentionPlayground";
 import { GroundingBadge } from "./GroundingBadge";
+import { HealthPanel } from "./HealthPanel";
 
 export function DocumentView({ documentId }: { documentId: string }) {
   const [document, setDocument] = useState<ParsedDocument | null>(null);
@@ -19,11 +26,13 @@ export function DocumentView({ documentId }: { documentId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("How does multi-head attention work?");
   const [busy, setBusy] = useState<"claims" | "quiz" | null>(null);
+  const [templates, setTemplates] = useState<NarrativeTemplate[]>([]);
 
   useEffect(() => {
     getDocument(documentId).then(setDocument).catch((e) => setError(String(e)));
     listClaims(documentId).then(setClaims).catch(() => {});
     listQuiz(documentId).then(setQuiz).catch(() => {});
+    listTemplates().then(setTemplates).catch(() => {});
   }, [documentId]);
 
   async function handleGenerateClaims() {
@@ -72,6 +81,11 @@ export function DocumentView({ documentId }: { documentId: string }) {
 
       <AttentionPlayground />
 
+      <HealthPanel
+        documentId={documentId}
+        onStrengthen={(newClaims) => setClaims((prev) => [...newClaims, ...prev])}
+      />
+
       <section className="space-y-3">
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex-1 min-w-64 text-sm">
@@ -84,6 +98,28 @@ export function DocumentView({ documentId }: { documentId: string }) {
               onChange={(e) => setQuery(e.target.value)}
             />
           </label>
+          {templates.length > 0 && (
+            <label className="text-sm">
+              <span className="block mb-1 text-black/60 dark:text-white/60">Template</span>
+              <select
+                className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2"
+                defaultValue=""
+                onChange={(e) => {
+                  const t = templates.find((tpl) => tpl.key === e.target.value);
+                  if (t) setQuery(t.query);
+                }}
+              >
+                <option value="" disabled>
+                  Choose a template...
+                </option>
+                {templates.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <button
             onClick={handleGenerateClaims}
             disabled={busy !== null}

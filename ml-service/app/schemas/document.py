@@ -39,6 +39,20 @@ class GroundedClaim(CamelModel):
     retrieval_score: float
     grounding_label: Literal["supported", "unsupported", "partial"] | None
     grounding_score: float | None
+    version: int
+    is_current: bool
+
+
+class SectionHealth(CamelModel):
+    section: str | None
+    claim_count: int
+    supported_count: int
+    partial_count: int
+    unsupported_count: int
+    not_checked_count: int
+    average_grounding_score: float | None
+    flagged: bool
+    flag_reason: str | None
 
 
 class QuizQuestion(CamelModel):

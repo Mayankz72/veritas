@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ARRAY, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import ARRAY, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -59,6 +59,8 @@ class Claim(Base):
     retrieval_score: Mapped[float] = mapped_column(Float, nullable=False)
     grounding_label: Mapped[str | None] = mapped_column(String, nullable=True)
     grounding_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

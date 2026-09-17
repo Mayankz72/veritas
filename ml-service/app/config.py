@@ -1,14 +1,13 @@
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env")
+
     database_url: str = "postgresql+psycopg://veritas:veritas@localhost:5432/veritas"
     environment: str = "development"
-
-    class Config:
-        env_file = ".env"
 
 
 @lru_cache

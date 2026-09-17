@@ -38,8 +38,30 @@ export const GroundedClaimSchema = z.object({
   retrievalScore: z.number(),
   groundingLabel: GroundingLabelSchema.nullable(),
   groundingScore: z.number().nullable(),
+  version: z.number().int(),
+  isCurrent: z.boolean(),
 });
 export type GroundedClaim = z.infer<typeof GroundedClaimSchema>;
+
+export const NarrativeTemplateSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  query: z.string(),
+});
+export type NarrativeTemplate = z.infer<typeof NarrativeTemplateSchema>;
+
+export const SectionHealthSchema = z.object({
+  section: z.string().nullable(),
+  claimCount: z.number().int(),
+  supportedCount: z.number().int(),
+  partialCount: z.number().int(),
+  unsupportedCount: z.number().int(),
+  notCheckedCount: z.number().int(),
+  averageGroundingScore: z.number().nullable(),
+  flagged: z.boolean(),
+  flagReason: z.string().nullable(),
+});
+export type SectionHealth = z.infer<typeof SectionHealthSchema>;
 
 export const QuizQuestionSchema = z.object({
   id: z.string(),
