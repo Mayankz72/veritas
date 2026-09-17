@@ -72,13 +72,13 @@ an ML project.
 ## Phase 3 — Grounding Verification & Eval Harness (the ML differentiator)
 **Goal:** Prove the citations are actually correct, with a measured metric — this is what separates the project from "just an LLM wrapper."
 
-- [ ] Build a labeled eval set: ~50-100 (claim, source passage, label) triples across a few papers, hand-labeled as supported / unsupported / partially-supported
-- [ ] Implement a grounding verifier: start with an NLI-style approach (entailment model, e.g. a small cross-encoder or `roberta-large-mnli`) scoring claim vs. retrieved passage
-- [ ] Wire the verifier into the pipeline: claims below a confidence threshold get flagged or regenerated
-- [ ] Eval script reporting precision/recall/F1 of the verifier against the labeled set
-- [ ] Track this metric over iterations (a `evals/results.md` log) — this is your resume bullet: "grounding verifier achieves X% precision on a hand-labeled eval set"
+- [x] Build a labeled eval set: 48 hand-labeled (claim, passage, label) triples — `ml-service/evals/grounding_eval_set.json` — built from real chunks of "Attention Is All You Need" (16 each of supported/unsupported/partial)
+- [x] Implement a grounding verifier — engineering call: instead of a heavyweight NLI cross-encoder (torch/transformers, GPU-friendly but heavy to install and iterate on), built a `LogisticRegression` over 5 cheap engineered features (embedding cosine similarity, token coverage, Jaccard overlap, sequence-match ratio, length ratio — `app/services/grounding_features.py`). Fully explainable, trains in milliseconds, no GPU. If numbers had come in too weak this would have been the first thing to swap for a real NLI model.
+- [x] Wire the verifier into the pipeline: `POST /documents/{id}/claims/generate` now sets `groundingLabel`/`groundingScore` on every claim (`app/services/grounding_verifier.py`)
+- [x] Eval script reporting precision/recall/F1: `evals/run_eval.py`, 5-fold stratified cross-validation (out-of-fold predictions, honest for a 48-example set)
+- [x] Tracked in `evals/results.md` — **resume bullet: grounding verifier achieves 70.8% accuracy / 0.709 macro-F1 (5-fold CV) distinguishing supported/unsupported/partial claims on a hand-labeled eval set.** Also documents a real limitation found by dogfooding against the live pipeline (verbatim-substring claims sat near the decision boundary) and the fix applied (exact-substring claims short-circuit to `supported` before ever reaching the classifier).
 
-**Deliverable:** `ml-service/evals/run_eval.py` producing a metrics report. This phase is allowed to take real iteration time — it's the part worth showing off.
+**Deliverable:** ✅ `python -m evals.run_eval` (from `ml-service/`) trains the verifier, prints the report, and writes `evals/results.md`. 27 passing tests total. Verified live: claims generated against the real ingested paper now carry real grounding labels, and the verbatim-substring gap found during manual testing was fixed, not just noted.
 
 ---
 

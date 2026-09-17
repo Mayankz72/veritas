@@ -10,6 +10,7 @@ from app.models import Claim as ClaimModel
 from app.models import Document as DocumentModel
 from app.schemas.document import GroundedClaim
 from app.services.claim_generation import extract_supporting_quote, get_provider
+from app.services.grounding_verifier import get_verifier
 from app.services.retrieval import retrieve_chunks
 
 router = APIRouter(prefix="/documents/{document_id}/claims", tags=["claims"])
@@ -56,9 +57,17 @@ def generate_claims(
     provider = get_provider()
     generated = provider.generate_claims(payload.query, passages, max_claims=payload.max_claims)
 
+    verifier = get_verifier()
+
     claim_models: list[ClaimModel] = []
     for gen_claim in generated:
         source = retrieved[gen_claim.source_chunk_index]
+        quote = extract_supporting_quote(gen_claim.text, source.chunk.text)
+
+        grounding_label, grounding_score = None, None
+        if verifier is not None:
+            grounding_label, grounding_score = verifier.predict(gen_claim.text, source.chunk.text)
+
         claim_models.append(
             ClaimModel(
                 id=uuid.uuid4().hex,
@@ -67,8 +76,10 @@ def generate_claims(
                 text=gen_claim.text,
                 source_chunk_ids=[source.chunk.id],
                 page=source.chunk.page,
-                quote=extract_supporting_quote(gen_claim.text, source.chunk.text),
+                quote=quote,
                 retrieval_score=source.score,
+                grounding_label=grounding_label,
+                grounding_score=grounding_score,
             )
         )
     db.add_all(claim_models)
