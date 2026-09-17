@@ -1,0 +1,18 @@
+{
+  "name": "veritas-research-tools",
+  "description": "Claude Code tools for the Veritas evidence-grounded research paper studio.",
+  "owner": {
+    "name": "Veritas"
+  },
+  "plugins": [
+    {
+      "name": "veritas-paper-studio",
+      "source": "./plugins/veritas-paper-studio",
+      "description": "Ingest a research paper, generate evidence-grounded claims and quiz questions, and run a health check via the Veritas ml-service.",
+      "version": "0.1.0",
+      "displayName": "Veritas Paper Studio",
+      "category": "productivity",
+      "tags": ["research", "nlp", "pdf", "rag"]
+    }
+  ]
+}

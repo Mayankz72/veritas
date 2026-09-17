@@ -144,11 +144,14 @@ Shipped the abstract-only version since it's the principled default per the lite
 ## Phase 8 — Agent Integration (feature parity)
 **Goal:** Match Trace's agent-native workflow.
 
-- [ ] Claude Code plugin: skill that drives the ingestion → generation → verification pipeline via CLI/bridge commands
-- [ ] Bridge commands for automated batch processing of papers
-- [ ] Reuse existing app model credentials (no separate API key requirement)
+- [x] Claude Code plugin: `plugins/veritas-paper-studio/` with 3 skills (`ingest-paper`, `analyze-paper`, `health-check`) that shell out to the ml-service's own REST API via `curl` — the pipeline itself already exists (Phases 1-5), this phase just exposes it as agent-invocable commands rather than building a parallel implementation
+- [ ] Bridge commands for automated *batch* processing of papers — not built; the skills operate on one paper per invocation. A batch-ingest skill (loop over a list of arXiv IDs) would be a small follow-up on top of `ingest-paper`, not new infrastructure.
+- [x] Reuse existing agent credentials, no separate API key: skills call `curl` directly, and the ml-service's default generation provider (`ExtractiveProvider`) needs no LLM/API key at all — the strongest version of "no separate API key requirement," since even the backend generation step is keyless by default
+- [x] Plugin marketplace manifest at the repo root (`.claude-plugin/marketplace.json`) referencing the plugin via a local relative-path source, so `claude --plugin-dir ./plugins/veritas-paper-studio` works today for local dev, and `claude plugin marketplace add <owner>/<repo>` + `claude plugin install veritas-paper-studio@veritas-research-tools` once pushed to GitHub
 
-**Deliverable:** `claude plugin install` works against this project's own marketplace manifest.
+**How this was verified (not just written and assumed correct):** consulted a specialized guide agent for the authoritative plugin/marketplace JSON schema and SKILL.md frontmatter (rather than guessing a plausible-looking format), then ran `claude plugin validate` — the actual CLI's own schema checker — against the marketplace manifest, the plugin manifest, and the skills directory. All three passed clean (one marketplace-description warning, fixed).
+
+**Deliverable:** ✅ `claude plugin validate .` (marketplace), `claude plugin validate ./plugins/veritas-paper-studio` (plugin manifest), and `claude plugin validate ./plugins/veritas-paper-studio/skills` (all 3 skills) all pass. Not yet verified: an actual end-to-end `/veritas-paper-studio:analyze-paper` invocation inside a live Claude Code session driving the real ml-service (would need a second session to install/invoke it) — the skill bodies were written to match the real API contracts from Phases 1-6 (verified endpoint shapes), but that specific integration path is untested.
 
 ---
 

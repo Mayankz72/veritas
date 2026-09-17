@@ -1,0 +1,19 @@
+{
+  "name": "veritas-paper-studio",
+  "displayName": "Veritas Paper Studio",
+  "version": "0.1.0",
+  "description": "Ingest research papers and generate evidence-grounded claims, quizzes, and health reports via the Veritas ml-service backend.",
+  "author": { "name": "Veritas" },
+  "homepage": "https://github.com/your-org/veritas",
+  "license": "MIT",
+  "keywords": ["research", "papers", "nlp", "rag", "claims"],
+  "userConfig": {
+    "backend_url": {
+      "type": "string",
+      "title": "ml-service URL",
+      "description": "Base URL of the running Veritas ml-service - start it with `docker compose up -d && uvicorn app.main:app` (see ml-service/README) or `docker run` the Dockerfile.",
+      "default": "http://localhost:8000",
+      "required": false
+    }
+  }
+}
