@@ -26,8 +26,10 @@ app.add_middleware(
     # Matches any localhost/127.0.0.1 port, not just :3000 - `next dev`
     # doesn't always land on 3000 (e.g. it's silently unusable on Windows
     # when Hyper-V/WSL has reserved it via netsh's dynamic port exclusion
-    # range, which happened during development of this project).
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
+    # range, which happened during development of this project) - plus any
+    # *.vercel.app subdomain, since both production and preview deployments
+    # get their own generated hostname.
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+|https://[a-zA-Z0-9-]+\.vercel\.app",
     allow_methods=["*"],
     allow_headers=["*"],
 )
