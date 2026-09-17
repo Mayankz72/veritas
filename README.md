@@ -7,9 +7,13 @@ citations and hoping they're right.
 
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-blue)](.github/workflows/ci.yml)
 
+**Live**: [app-woad-nu-48.vercel.app](https://app-woad-nu-48.vercel.app) ·
 **[Demo walkthrough video](./demo/walkthrough.webm)** — ingest → generate
 grounded claims → publish → view the public read-only page, recorded from a
-real Playwright run against the live app.
+real Playwright run against the live app. (First-time ingestion of a new
+paper on the live site can be slow/flaky on free-tier hosting — see
+[Deployment](#deployment) below; the video shows the real experience without
+that constraint.)
 
 ## Why this isn't just an LLM wrapper
 
@@ -115,16 +119,43 @@ the demo video above).
 
 ## Deployment
 
-Not yet deployed (no hosting accounts wired up for this project). The path:
+**Live** (all free tiers, zero cost to run):
 
-- **Web app**: Vercel — zero-config for a standard Next.js app; set
-  `NEXT_PUBLIC_ML_SERVICE_URL` to the deployed ml-service URL.
-- **ML service**: `ml-service/Dockerfile` is built and smoke-tested; deploy it
-  to Fly.io, Railway, or Render. Set `DATABASE_URL` to a managed Postgres with
-  the `vector` extension available (Neon and Supabase both support it).
-- **Database**: run the `CREATE EXTENSION vector` + table creation that
-  `init_db()` already does automatically on startup — no separate migration
-  step needed for a first deploy.
+- **Web app**: [app-woad-nu-48.vercel.app](https://app-woad-nu-48.vercel.app) — Vercel
+- **ML service**: [veritas-ml-service.onrender.com](https://veritas-ml-service.onrender.com) — Render (free web service)
+- **Database**: Neon Postgres (`veritas_paper_studio` project), `vector` extension enabled
+
+### Known limitation: first-time ingestion of a new paper is unreliable on the free tier
+
+Everything except ingesting a brand-new paper is fast and reliable in
+production — health checks, claim generation on already-ingested papers
+(~3.6s), quiz, publish/export. But parsing + embedding a full ~15-page paper
+(58 chunks) is right at the edge of Render's free tier (512MB RAM, 0.1 shared
+vCPU): it sometimes completes cleanly in 4-4.5 minutes and sometimes the
+process dies mid-request. I tried tuning `EMBEDDING_BATCH_SIZE` (16 → 8 → 4)
+to rule out a batch-memory issue specifically — it failed at all three, which
+points at the free tier's resource ceiling under sustained load, not a code
+bug. A `.github/workflows/keep-warm.yml` ping prevents the *sleep-then-cold-
+start* tax, but doesn't change the intrinsic embedding time or fix the
+occasional crash.
+
+This is a real, disclosed tradeoff rather than a claim of full reliability:
+the [demo video](./demo/walkthrough.webm) was recorded locally (unconstrained
+resources) and shows the real experience; the live backend is genuinely
+correct (51+9 passing tests, multiple clean full runs verified) but may need
+a retry on first ingest of a new paper. The fix is either a small paid tier
+(more RAM/CPU) or re-architecting ingestion to run as an async background job
+with client-side polling — both left as deliberate future work rather than
+done under a "no cost" constraint. See [ROADMAP.md](./ROADMAP.md) for the
+full investigation.
+
+### Redeploying
+
+- **Web app**: `cd app && vercel --prod` (env var `NEXT_PUBLIC_ML_SERVICE_URL`
+  already set on Vercel)
+- **ML service**: push to `main` — Render auto-deploys from GitHub
+- **Database**: `ml-service/app/db.py`'s `init_db()` runs `CREATE EXTENSION
+  vector` + table creation automatically on startup, no manual migration step
 
 ## Agent integration
 
