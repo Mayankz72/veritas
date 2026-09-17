@@ -2,17 +2,21 @@ import {
   GroundedClaimSchema,
   NarrativeTemplateSchema,
   ParsedDocumentSchema,
+  PublicationBundleSchema,
+  PublicationSchema,
   QuizQuestionSchema,
   SectionHealthSchema,
   type GroundedClaim,
   type NarrativeTemplate,
   type ParsedDocument,
+  type Publication,
+  type PublicationBundle,
   type QuizQuestion,
   type SectionHealth,
 } from "./schemas/document";
 import { z } from "zod";
 
-const ML_SERVICE_URL = process.env.NEXT_PUBLIC_ML_SERVICE_URL ?? "http://localhost:8000";
+export const ML_SERVICE_URL = process.env.NEXT_PUBLIC_ML_SERVICE_URL ?? "http://localhost:8000";
 
 async function request<T>(
   path: string,
@@ -81,6 +85,27 @@ export function getDocumentHealth(documentId: string): Promise<SectionHealth[]> 
 
 export function listTemplates(): Promise<NarrativeTemplate[]> {
   return request("/templates", z.array(NarrativeTemplateSchema));
+}
+
+export function publishDocument(
+  documentId: string,
+  params: { expiresInHours?: number | null; includeFigures?: boolean },
+): Promise<Publication> {
+  return request(`/documents/${documentId}/publish`, PublicationSchema, {
+    method: "POST",
+    body: JSON.stringify({
+      expires_in_hours: params.expiresInHours ?? null,
+      include_figures: params.includeFigures ?? true,
+    }),
+  });
+}
+
+export function getPublication(publicationId: string): Promise<PublicationBundle> {
+  return request(`/publications/${publicationId}`, PublicationBundleSchema);
+}
+
+export function exportUrl(publicationId: string): string {
+  return `${ML_SERVICE_URL}/publications/${publicationId}/export`;
 }
 
 export function listQuiz(documentId: string): Promise<QuizQuestion[]> {

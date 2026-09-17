@@ -113,12 +113,12 @@ an ML project.
 ## Phase 6 — Publishing & Sharing (feature parity)
 **Goal:** Shareable, exportable output.
 
-- [ ] Unguessable share links `/p/<id>`
-- [ ] Publication controls (include/exclude figures, expiration)
-- [ ] Standalone JSON export format (`*.veritas.json`)
-- [ ] Per-claim and per-section permalinks
+- [x] Unguessable share links `/p/<id>` — `id` is a `secrets.token_urlsafe(16)` slug (~130 bits), the only "auth" a publication has (matches this project's explicit no-accounts scope)
+- [x] Publication controls: `include_figures` flag stored (figure *extraction* itself is still Phase 7/future work, so this is a placeholder toggle for now) and optional expiration (`expires_in_hours` → `expires_at`), enforced server-side with a `410 Gone` on fetch/export past expiry — verified live with a deliberately-already-expired publication
+- [x] Standalone JSON export: `GET /publications/{id}/export` returns a `*.veritas.json` file (`Content-Disposition: attachment`) bundling the document, current claims, and quiz under a versioned `"format": "veritas-export-v1"` envelope
+- [x] Per-claim and per-section permalinks — public view renders each claim/question with a stable `id="claim-<id>"` / `id="quiz-<id>"` anchor
 
-**Deliverable:** A published paper page shareable via link, viewable without auth.
+**Deliverable:** ✅ `POST /documents/{id}/publish` → shareable `/p/<id>` link, viewable with no auth (`PublicationView.tsx`, read-only: document header, the same attention playground, claims, quiz, and a "Download .veritas.json" link). Verified end-to-end: publish → fetch bundle (3 claims, 3 quiz questions) → export downloads with correct filename/content-type → a deliberately-expired publication correctly 410s instead of serving stale content. `tsc`/ESLint clean, production build succeeds (new `/p/[id]` route), 9 Vitest + 36 pytest tests still pass.
 
 ---
 

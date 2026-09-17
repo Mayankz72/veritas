@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -65,3 +66,27 @@ class QuizQuestion(CamelModel):
     page: int
     grounding_label: Literal["supported", "unsupported", "partial"] | None
     grounding_score: float | None
+
+
+class Publication(CamelModel):
+    id: str
+    document_id: str
+    include_figures: bool
+    expires_at: datetime | None
+    created_at: datetime
+
+
+class PublicationBundle(CamelModel):
+    publication: Publication
+    document: ParsedDocument
+    claims: list[GroundedClaim]
+    quiz: list[QuizQuestion]
+
+
+class VeritasExport(CamelModel):
+    format: Literal["veritas-export-v1"] = "veritas-export-v1"
+    publication_id: str
+    exported_at: datetime
+    document: ParsedDocument
+    claims: list[GroundedClaim]
+    quiz: list[QuizQuestion]

@@ -20,6 +20,25 @@ class ArxivIngestRequest(BaseModel):
     arxiv_id: str
 
 
+def _document_to_schema(document: DocumentModel) -> ParsedDocument:
+    return ParsedDocument(
+        id=document.id,
+        source_type=document.source_type,
+        title=document.title,
+        page_count=document.page_count,
+        chunks=[
+            ChunkSchema(
+                id=c.id,
+                page=c.page,
+                section=c.section,
+                text=c.text,
+                bbox=tuple(c.bbox) if c.bbox else None,
+            )
+            for c in document.chunks
+        ],
+    )
+
+
 def _persist_document(
     db: Session, source_type: str, title: str, page_count: int, chunks
 ) -> ParsedDocument:
@@ -52,22 +71,7 @@ def _persist_document(
 
     db.commit()
 
-    return ParsedDocument(
-        id=document.id,
-        source_type=document.source_type,
-        title=document.title,
-        page_count=document.page_count,
-        chunks=[
-            ChunkSchema(
-                id=c.id,
-                page=c.page,
-                section=c.section,
-                text=c.text,
-                bbox=tuple(c.bbox) if c.bbox else None,
-            )
-            for c in chunk_models
-        ],
-    )
+    return _document_to_schema(document)
 
 
 @router.post("/upload", response_model=ParsedDocument)
@@ -101,19 +105,4 @@ def get_document(document_id: str, db: Session = Depends(get_db)) -> ParsedDocum
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    return ParsedDocument(
-        id=document.id,
-        source_type=document.source_type,
-        title=document.title,
-        page_count=document.page_count,
-        chunks=[
-            ChunkSchema(
-                id=c.id,
-                page=c.page,
-                section=c.section,
-                text=c.text,
-                bbox=tuple(c.bbox) if c.bbox else None,
-            )
-            for c in document.chunks
-        ],
-    )
+    return _document_to_schema(document)

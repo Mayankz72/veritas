@@ -50,19 +50,6 @@ export const NarrativeTemplateSchema = z.object({
 });
 export type NarrativeTemplate = z.infer<typeof NarrativeTemplateSchema>;
 
-export const SectionHealthSchema = z.object({
-  section: z.string().nullable(),
-  claimCount: z.number().int(),
-  supportedCount: z.number().int(),
-  partialCount: z.number().int(),
-  unsupportedCount: z.number().int(),
-  notCheckedCount: z.number().int(),
-  averageGroundingScore: z.number().nullable(),
-  flagged: z.boolean(),
-  flagReason: z.string().nullable(),
-});
-export type SectionHealth = z.infer<typeof SectionHealthSchema>;
-
 export const QuizQuestionSchema = z.object({
   id: z.string(),
   documentId: z.string(),
@@ -75,3 +62,33 @@ export const QuizQuestionSchema = z.object({
   groundingScore: z.number().nullable(),
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
+
+export const PublicationSchema = z.object({
+  id: z.string(),
+  documentId: z.string(),
+  includeFigures: z.boolean(),
+  expiresAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type Publication = z.infer<typeof PublicationSchema>;
+
+export const PublicationBundleSchema = z.object({
+  publication: PublicationSchema,
+  document: ParsedDocumentSchema,
+  claims: z.array(GroundedClaimSchema),
+  quiz: z.array(QuizQuestionSchema),
+});
+export type PublicationBundle = z.infer<typeof PublicationBundleSchema>;
+
+export const SectionHealthSchema = z.object({
+  section: z.string().nullable(),
+  claimCount: z.number().int(),
+  supportedCount: z.number().int(),
+  partialCount: z.number().int(),
+  unsupportedCount: z.number().int(),
+  notCheckedCount: z.number().int(),
+  averageGroundingScore: z.number().nullable(),
+  flagged: z.boolean(),
+  flagReason: z.string().nullable(),
+});
+export type SectionHealth = z.infer<typeof SectionHealthSchema>;

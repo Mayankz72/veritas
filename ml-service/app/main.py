@@ -7,6 +7,8 @@ from app.db import init_db
 from app.routers.claims import router as claims_router
 from app.routers.documents import router as documents_router
 from app.routers.health import router as health_router
+from app.routers.publications import documents_router as publish_router
+from app.routers.publications import publications_router
 from app.routers.quiz import router as quiz_router
 from app.routers.templates import router as templates_router
 
@@ -35,6 +37,8 @@ app.include_router(claims_router)
 app.include_router(quiz_router)
 app.include_router(health_router)
 app.include_router(templates_router)
+app.include_router(publish_router)
+app.include_router(publications_router)
 
 
 @app.get("/health")

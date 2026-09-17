@@ -18,6 +18,7 @@ import type {
 import { AttentionPlayground } from "./AttentionPlayground";
 import { GroundingBadge } from "./GroundingBadge";
 import { HealthPanel } from "./HealthPanel";
+import { PublishControl } from "./PublishControl";
 
 export function DocumentView({ documentId }: { documentId: string }) {
   const [document, setDocument] = useState<ParsedDocument | null>(null);
@@ -80,6 +81,8 @@ export function DocumentView({ documentId }: { documentId: string }) {
       </header>
 
       <AttentionPlayground />
+
+      <PublishControl documentId={documentId} />
 
       <HealthPanel
         documentId={documentId}

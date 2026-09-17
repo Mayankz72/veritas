@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from datetime import datetime, timezone
 
@@ -12,6 +13,12 @@ EMBEDDING_DIM = 384
 
 def _uuid() -> str:
     return uuid.uuid4().hex
+
+
+def _publication_slug() -> str:
+    # URL-safe, unguessable (~130 bits of entropy) - the only "auth" a
+    # publication has, matching this project's no-accounts scope.
+    return secrets.token_urlsafe(16)
 
 
 class Document(Base):
@@ -64,6 +71,20 @@ class Claim(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+
+
+class Publication(Base):
+    __tablename__ = "publications"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_publication_slug)
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"), nullable=False)
+    include_figures: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    document: Mapped[Document] = relationship()
 
 
 class QuizQuestion(Base):
