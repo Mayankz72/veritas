@@ -39,3 +39,15 @@ class GroundedClaim(CamelModel):
     retrieval_score: float
     grounding_label: Literal["supported", "unsupported", "partial"] | None
     grounding_score: float | None
+
+
+class QuizQuestion(CamelModel):
+    id: str
+    document_id: str
+    section: str | None
+    question: str
+    answer: str
+    source_chunk_id: str
+    page: int
+    grounding_label: Literal["supported", "unsupported", "partial"] | None
+    grounding_score: float | None

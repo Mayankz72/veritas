@@ -43,6 +43,23 @@ type GroundedClaim = {
 };
 ```
 
+## `QuizQuestion` (Phase 4)
+
+```ts
+type QuizQuestion = {
+  id: string;
+  documentId: string;
+  section: string | null;
+  question: string;
+  answer: string;
+  sourceChunkId: string;
+  page: number;
+  groundingLabel: "supported" | "unsupported" | "partial" | null;
+  groundingScore: number | null;
+};
+```
+
 Update this file whenever a schema changes on either side, and update both
-implementations (`app/src/lib/schemas/*.ts` and `ml-service/app/schemas/*.py`)
-to match.
+implementations (`app/src/lib/schemas/document.ts` and
+`ml-service/app/schemas/document.py`) to match. As of Phase 4, both sides are
+implemented and this file is the human-readable diff-check between them.

@@ -85,14 +85,16 @@ an ML project.
 ## Phase 4 — Interactive Learning Layer (feature parity)
 **Goal:** Match Trace's interactive study features on top of our grounded evidence.
 
-- [ ] LaTeX-to-MathML rendering for equations
-- [ ] Restricted AST evaluator for formula playgrounds (no `eval`, safety-limited — reuse the design idea, implement independently)
-- [ ] Parameter sliders driving playground recomputation
-- [ ] "Primer" concept cards (LLM-generated, grounded via Phase 2/3 pipeline)
-- [ ] Evidence-linked quiz question generation
-- [ ] Quiz groundedness scorer (reuse the Phase 3 verifier: does the question's expected answer actually appear in the cited passage?) — measurable, another eval number
+- [x] LaTeX rendering via KaTeX (`app/src/components/Formula.tsx`) — KaTeX emits HTML plus a MathML accessibility tree by default, satisfying this without a separate MathML pipeline
+- [x] Restricted AST evaluator for formula playgrounds — hand-rolled recursive-descent parser + tree-walking evaluator (`app/src/lib/safe-math.ts`), no `eval`/`new Function`, allowlisted functions only. Caught a real bug via its own test suite: a plain-object function/variable lookup let `constructor(1)` and `__proto__` resolve through the JS prototype chain instead of being rejected — fixed with a `Map` for functions and `hasOwnProperty` checks for variables (see `test_...never executes arbitrary JS` in `safe-math.test.ts`)
+- [x] Parameter sliders driving playground recomputation — `AttentionPlayground.tsx` visualizes the paper's 3.2.1 scaling factor (`dot / sqrt(d_k)`) live as you drag `d_k`/dot-product sliders
+- [ ] "Primer" concept cards as a distinct pedagogical UI — deferred; the grounded-claims list (below) covers the same evidence-linked-content need for now, a separate "primer" framing didn't make the cut this pass
+- [x] Evidence-linked quiz question generation — cloze-deletion generator (`app/services/quiz_generation.py`), no LLM needed by default, same extractive-first philosophy as claim generation
+- [x] Quiz groundedness scorer — reuses the Phase 3 verifier directly (`POST /documents/{id}/quiz/generate` sets `groundingLabel`/`groundingScore` per question)
 
-**Deliverable:** A working paper page with playgrounds, primers, and quizzes, all traceable to source.
+**Deliverable:** ✅ `/documents/[id]` page: document header, interactive attention-scaling playground, a query box that generates grounded claims and quiz questions against the live ml-service, both rendered with grounding badges. Verified: production build succeeds, `tsc --noEmit` clean, ESLint clean, 9 passing Vitest tests (safe-math), 31 passing pytest tests (backend). CORS bug found and fixed during integration testing (see below). **Not verified**: actual browser rendering/interaction — the Claude-in-Chrome extension wasn't connected in this session, so sliders/KaTeX/click-through were checked via curl simulation of the exact requests the page makes (200s, correct CORS headers) and static analysis, not a real browser. Recommend a manual click-through before treating this as fully done.
+
+**Bug found and fixed via manual integration testing:** the ml-service's CORS config only allowed `http://localhost:3000`, but this machine's Windows `netsh` dynamic port-exclusion range covers 3000 *and* 3100, so `next dev` silently lands on a different port (4173 here) — which CORS then rejected. Fixed by switching to `allow_origin_regex` matching any localhost/127.0.0.1 port.
 
 ---
 
