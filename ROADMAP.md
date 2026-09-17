@@ -30,13 +30,13 @@ an ML project.
 ## Phase 0 — Foundations (setup)
 **Goal:** Repo scaffolded, both services running, CI in place.
 
-- [ ] Monorepo layout: `/app` (Next.js), `/ml-service` (FastAPI), `/packages/shared` (shared types/schemas)
-- [ ] Next.js app scaffold (TS, App Router, Tailwind or CSS modules)
-- [ ] FastAPI service scaffold with `/health` endpoint
-- [ ] Postgres + pgvector via docker-compose for local dev
-- [ ] Zod schemas mirrored as Pydantic models (single source of truth documented, kept in sync manually or via codegen)
-- [ ] Git repo, `.gitignore`, README, lint/format (ESLint/Prettier, ruff/black)
-- [ ] GitHub Actions: lint + unit tests on push
+- [x] Monorepo layout: `/app` (Next.js), `/ml-service` (FastAPI), `/packages/shared` (shared types/schemas)
+- [x] Next.js app scaffold (TS, App Router, Tailwind or CSS modules)
+- [x] FastAPI service scaffold with `/health` endpoint
+- [x] Postgres + pgvector via docker-compose for local dev
+- [ ] Zod schemas mirrored as Pydantic models (Pydantic side done in `ml-service/app/schemas/document.py`; Zod side lands when the frontend consumes it in a later phase)
+- [x] Git repo, `.gitignore`, README, lint/format (ESLint/Prettier, ruff/black)
+- [x] GitHub Actions: lint + unit tests on push
 
 **Deliverable:** `docker-compose up` runs Postgres; `npm run dev` and `uvicorn` both boot; a trivial end-to-end ping from Next.js to FastAPI works.
 
@@ -45,14 +45,14 @@ an ML project.
 ## Phase 1 — PDF Ingestion & Extraction
 **Goal:** Upload a PDF (or arXiv ID), get structured, page-accurate text + layout.
 
-- [ ] Upload flow: local file or arXiv ID → fetch → store raw PDF
-- [ ] Text extraction with page numbers and bounding boxes (PyMuPDF)
-- [ ] Section/heading segmentation (heuristic first: font-size/style based)
-- [ ] Figure/table/equation region detection (heuristic first, ML upgrade in Phase 7)
-- [ ] Chunking strategy for downstream retrieval (by section/paragraph, with page provenance kept per chunk)
-- [ ] Store parsed doc as versioned JSON (`ParsedDocument` schema)
+- [x] Upload flow: local file or arXiv ID → fetch → extract (raw PDF bytes are fetched/read but not yet persisted to blob storage — only extracted chunks are stored; fine for now, revisit if re-parsing with a better pipeline later matters)
+- [x] Text extraction with page numbers and bounding boxes (PyMuPDF)
+- [x] Section/heading segmentation (heuristic: font-size relative to median body size + bold detection; validated against the real "Attention Is All You Need" PDF — correctly recovered all section/subsection headings)
+- [ ] Figure/table/equation region detection (deferred to Phase 7 — not started)
+- [x] Chunking strategy for downstream retrieval (merges body blocks up to ~800 chars, flushes on heading/page/size boundaries, keeps page + section + bbox per chunk)
+- [x] Store parsed doc (Postgres `documents`/`chunks` tables via SQLAlchemy, not flat JSON — gives us the FK structure Phase 2 needs for embeddings; `version` column exists but versioning logic itself is still a stub for Phase 5)
 
-**Deliverable:** Given a PDF, produce a `ParsedDocument` JSON with page-tagged chunks. Demo on the built-in example ("Attention Is All You Need").
+**Deliverable:** ✅ `POST /documents/arxiv` and `POST /documents/upload` return a `ParsedDocument`; `python -m scripts.ingest_demo` ingests the built-in example ("Attention Is All You Need") standalone. 16 passing tests (`pytest`) cover heading detection, chunk/page boundaries, and arXiv ID parsing using a synthetic PDF fixture (no network needed in CI).
 
 ---
 
