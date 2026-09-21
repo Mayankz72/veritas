@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: veritas
+      POSTGRES_PASSWORD: veritas
+      POSTGRES_DB: veritas
+    ports:
+      - "5432:5432"
+    volumes:
+      - veritas_pg_data:/var/lib/postgresql/data
+
+volumes:
+  veritas_pg_data:

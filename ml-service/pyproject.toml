@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    "B008",  # FastAPI's Depends(...) in argument defaults is the intended pattern
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires a live Postgres+pgvector instance (see tests/integration/conftest.py)",
+]

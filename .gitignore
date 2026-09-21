@@ -1,0 +1,24 @@
+# Node / Next.js
+app/node_modules/
+app/.next/
+app/out/
+
+# Python
+ml-service/.venv/
+ml-service/__pycache__/
+ml-service/**/__pycache__/
+ml-service/*.pyc
+ml-service/.pytest_cache/
+ml-service/.env
+
+# OS
+.DS_Store
+Thumbs.db
+.neon
+.env.local
+node_modules/
+
+# Editor/agent tooling (local only)
+.claude/
+app/AGENTS.md
+app/CLAUDE.md
