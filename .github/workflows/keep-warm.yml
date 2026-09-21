@@ -1,0 +1,20 @@
+name: Keep Render service warm
+
+# Render's free tier spins the service down after ~15 min of inactivity;
+# the next request then pays a cold-start tax on top of the free tier's
+# already-limited CPU. Pinging /health periodically keeps it warm so
+# viewers hitting an already-ingested page or generating claims get a fast
+# response - it does NOT speed up first-time ingestion of a new paper,
+# which is CPU-bound regardless.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping ml-service health endpoint
+        run: curl -sf https://veritas-ml-service.onrender.com/health
